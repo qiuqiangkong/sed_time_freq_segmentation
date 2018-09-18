@@ -83,11 +83,7 @@ def write_audio(path, audio, sample_rate):
     
 def calculate_average_energy(x):
     return np.mean(np.square(x))
-    
-    
-# def normalize_to_unit_energy(x):
-#     return x / np.sqrt(calculate_average_energy(x))
-    
+
     
 def normalize_to_energy(x, db):
     return x / np.sqrt(calculate_average_energy(x)) * np.power(10., db / 20.)
@@ -192,6 +188,11 @@ def get_sed_from_meta2(events, pred_indexes):
 def ideal_binary_mask(events_stft, scene_stft):
     db = 5.
     gt_mask = (np.sign(20 * np.log10(events_stft / (scene_stft + 1e-8) + 1e-8) + db) + 1.) / 2.
+    return gt_mask
+    
+    
+def ideal_ratio_mask(events_stft, scene_stft):
+    gt_mask = events_stft / (events_stft + scene_stft)
     return gt_mask
     
     
@@ -333,8 +334,8 @@ def event_based_evaluation(reference_event_list, estimated_event_list):
     event_based_metric = sed_eval.sound_event.EventBasedMetrics(
         # event_label_list=reference_event_list.unique_event_labels,
         event_label_list = config.labels, 
-        t_collar=0.200,
-        percentage_of_length=0.2,
+        # t_collar=0.200,
+        # percentage_of_length=0.2,
     )
 
     for file in evaluated_files:

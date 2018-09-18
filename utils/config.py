@@ -1,19 +1,11 @@
-sample_rate = 32000
+sample_rate = 32000     # Target sample rate during feature extraction
+window_size = 2048      # Size of FFT window
+overlap = 1024          # Amount of overlap between frames
+clip_duration = 10.     # Duraion of an audio clip (seconds)
+seq_len = 311   # Number of frames of an audio clip
+mel_bins = 64   # Number of Mel bins
 
-"""int: Target sample rate during feature extraction"""
-
-window_size = 2048
-"""int: Size of FFT window"""
-
-overlap = 1024
-"""int: Amount of overlap between frames"""
-
-seq_len = 311
-
-mel_bins = 64
-"""int: Number of Mel bins"""
-
-kmax = 3
+# kmax = 3
 
 labels = ['Acoustic_guitar', 'Applause', 'Bark', 'Bass_drum', 
           'Burping_or_eructation', 'Bus', 'Cello', 'Chime', 'Clarinet', 
