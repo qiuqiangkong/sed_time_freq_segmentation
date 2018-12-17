@@ -30,7 +30,7 @@ The sound event detection in the inference stage is shown in the figure below.
 
 <img src="https://github.com/qiuqiangkong/sed_time_freq_segmentation/blob/master/appendixes/fig_sed.png" width="550">
 
-The separated audio examples can be listened ![here](https://drive.google.com/open?id=1Mj8APCdxLYge5kgMQnLDwefRsKM_nVdA)
+The separated audio examples can be listened [here](https://drive.google.com/open?id=1Mj8APCdxLYge5kgMQnLDwefRsKM_nVdA)
 
 ## Run the code
 **0. Prepare data**. The dataset looks like:
