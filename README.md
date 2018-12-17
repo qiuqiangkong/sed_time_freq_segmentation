@@ -22,13 +22,15 @@ The proposed method is trained only on the weakly labelled data shown in the red
 
 <img src="https://github.com/qiuqiangkong/sed_time_freq_segmentation/blob/master/appendixes/framework.png" width="500">
 
-The source separation in the inference stage is shown below. Separated audio of sound events can be obtained from the segmentation masks. 
+The source separation in the inference stage is shown in the figure below. Separated audio of sound events can be obtained from the segmentation masks. 
 
 <img src="https://github.com/qiuqiangkong/sed_time_freq_segmentation/blob/master/appendixes/fig_ss.png" width="600">
 
-The sound event detection in the inference stage is shown below. 
+The sound event detection in the inference stage is shown in the figure below. 
 
 <img src="https://github.com/qiuqiangkong/sed_time_freq_segmentation/blob/master/appendixes/fig_sed.png" width="550">
+
+The separated audio examples can be listened ![here](https://drive.google.com/open?id=1Mj8APCdxLYge5kgMQnLDwefRsKM_nVdA)
 
 ## Run the code
 **0. Prepare data**. The dataset looks like:
