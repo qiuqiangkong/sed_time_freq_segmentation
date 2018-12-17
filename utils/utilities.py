@@ -106,11 +106,6 @@ def scale(x, mean, std):
 
     return (x - mean) / std
     
-    
-# def sigmoid(x):
-#     
-#   return 1 / (1 + np.exp(-x))
-  
   
 def target_to_labels(y, labels):
     target_labels = []
@@ -129,7 +124,6 @@ def search_meta_by_mixture_name(meta, audio_name):
 def get_ground_truth_indexes(events):
     
     lb_to_ix = config.lb_to_ix
-    
     indexes = []
     
     for event in events:
