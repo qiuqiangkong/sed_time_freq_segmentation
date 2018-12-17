@@ -107,9 +107,9 @@ def scale(x, mean, std):
     return (x - mean) / std
     
     
-def sigmoid(x):
-    
-  return 1 / (1 + np.exp(-x))
+# def sigmoid(x):
+#     
+#   return 1 / (1 + np.exp(-x))
   
   
 def target_to_labels(y, labels):
@@ -121,7 +121,6 @@ def target_to_labels(y, labels):
     
     
 def search_meta_by_mixture_name(meta, audio_name):
-    
     for e in meta:
         if e['mixture_name'] == audio_name:
             return e
@@ -160,31 +159,8 @@ def get_sed_from_meta(events):
         gt_sed[onset : offset, ix] = 1
         
     return gt_sed
-    
-    
-def get_sed_from_meta2(events, pred_indexes):
-    
-    classes_num = len(config.labels)
-    seq_len = config.seq_len
-    sample_rate = config.sample_rate
-    overlap = config.overlap
-    frames_per_sec = sample_rate / float(overlap)
-    lb_to_ix = config.lb_to_ix
-    
-    gt_sed = np.zeros((seq_len, classes_num), dtype=np.int32)
-    
-    for event in events:
-        event_label = event['event_label']
-        onset = int(event['onset'] * frames_per_sec)
-        offset = int(event['offset'] * frames_per_sec) + 1
-        ix = lb_to_ix[event_label]
-        gt_sed[onset : offset, ix] = 1
-        
-    gt_sed = gt_sed[:, pred_indexes]
-        
-    return gt_sed
-    
-    
+
+
 def ideal_binary_mask(events_stft, scene_stft):
     db = 5.
     gt_mask = (np.sign(20 * np.log10(events_stft / (scene_stft + 1e-8) + 1e-8) + db) + 1.) / 2.
@@ -275,45 +251,7 @@ def prec_recall_fvalue(y_gt, p_y_pred, thres, average):
     else:
         raise Exception("Incorrect dimension!")
         
-        
-def prec_recall_fvalue_from_tp_fn_fp(tp, fn, fp, average):
-    """
-    Args:
-      tp, fn, fp: int | list or ndarray of int
-      average: None (element wise) | 'micro' (calculate metrics globally) 
-        | 'macro' (calculate metrics for each label then average). 
       
-    Returns:
-      prec, recall, fvalue
-    """
-    eps = 1e-10
-    if type(tp) == int or type(tp) == np.int32 or type(tp) == np.int64:
-        prec = tp / max(float(tp + fp), eps)
-        recall = tp / max(float(tp + fn), eps)
-        fvalue = 2 * (prec * recall) / max(float(prec + recall), eps)
-        return prec, recall, fvalue
-    elif type(tp) == list or type(tp) == np.ndarray:
-        n_classes = len(tp)
-        if average is None or average == 'macro':
-            precs, recalls, fvalues = [], [], []
-            for j1 in range(n_classes):
-                (prec, recall, fvalue) = prec_recall_fvalue_from_tp_fn_fp(tp[j1], fn[j1], fp[j1], average=None)
-                precs.append(prec)
-                recalls.append(recall)
-                fvalues.append(fvalue)
-            if average is None:
-                return precs, recalls, fvalues
-            elif average == 'macro':
-                return np.mean(precs), np.mean(recalls), np.mean(fvalues)
-        elif average == 'micro':
-            (prec, recall, fvalue) = prec_recall_fvalue_from_tp_fn_fp(np.sum(tp), np.sum(fn), np.sum(fp), average=None)
-            return prec, recall, fvalue
-        else:
-            raise Exception("Incorrect average arg!")
-    else:
-        raise Exception("Incorrect type!")
-        
-        
 def event_based_evaluation(reference_event_list, estimated_event_list):
     """ Calculate sed_eval event based metric for challenge
         Parameters

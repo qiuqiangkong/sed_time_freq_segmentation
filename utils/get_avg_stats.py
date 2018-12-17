@@ -3,7 +3,10 @@ import sys
 sys.path.insert(1, os.path.join(sys.path[0], '../utils'))
 import numpy as np
 import pickle
+import time
+import yaml
 import argparse
+import logging
 import matplotlib.pyplot as plt
 
 from utilities import search_meta_by_mixture_name, event_based_evaluation
@@ -12,19 +15,21 @@ from vad import activity_detection
 
 
 def get_stats_single_fold(args):
-    
+
+    # Arguments & parameters
     workspace = args.workspace
     filename = args.filename
     model_type = args.model_type
     scene_type = args.scene_type
     snr = args.snr
+    holdout_fold = args.holdout_fold
     
     labels = config.labels
     classes_num = len(labels)
     
-    holdout_fold = 1
-    
     # Paths
+    yaml_path = os.path.join(workspace, 'mixture.yaml')
+    
     stat_path = os.path.join(workspace, 'stats', filename, 
         'model_type={}'.format(model_type), 
         'scene_type={},snr={}'.format(scene_type, snr), 
@@ -36,20 +41,20 @@ def get_stats_single_fold(args):
         'holdout_fold{}'.format(holdout_fold), 'pred_prob.p')
     
     # Load stats
+    load_yaml_time = time.time()
+    with open(yaml_path, 'r') as f:
+        meta = yaml.load(f)
+    logging.info('Load yaml file time: {:.3f} s'.format(time.time() - load_yaml_time))
+    
     stat = pickle.load(open(stat_path, 'rb'))
-    
     pred_prob = pickle.load(open(pred_prob_path, 'rb'))
-    
-    meta = pickle.load(open(os.path.join(workspace, '_tmp', 'mixture_yaml.p'), 'rb'))
-    
+
     audio_names = pred_prob['audio_name']
     sed_outputs = pred_prob['sed_output']
     sed_targets = pred_prob['sed_target']
     
     ref_event_list = get_ref_event_list(meta, audio_names)
-    
     est_event_list = get_est_event_list(sed_outputs, audio_names, labels)
-    
     event_based_metric = event_based_evaluation(ref_event_list, est_event_list)
     
     for key in stat.keys():
@@ -57,13 +62,12 @@ def get_stats_single_fold(args):
     
     print(event_based_metric)
     
-    for n in range(len(audio_names)):
+    for (n, audio_name) in enumerate(audio_names):
         
         curr_meta = search_meta_by_mixture_name(meta, audio_names[n])
-        
         target_labels = [event['event_label'] for event in curr_meta['events']]
         
-        print(target_labels)
+        print(audio_name, 'targets:', target_labels)
         
         fig, axs = plt.subplots(7, 6, sharex=True, figsize=(15, 10))
         for k in range(classes_num):
@@ -81,6 +85,7 @@ def get_stats_single_fold(args):
     
 def get_stats_all_folds(args):
     
+    # Arguments & parameters
     workspace = args.workspace
     filename = args.filename
     model_type = args.model_type
@@ -117,7 +122,6 @@ def get_stats_all_folds(args):
         meta = pickle.load(open(os.path.join(workspace, '_tmp', 'mixture_yaml.p'), 'rb'))
         
         ref_event_list = get_ref_event_list(meta, audio_names)
-        
         est_event_list = get_est_event_list(sed_outputs, audio_names, labels)
         
         event_based_metric = event_based_evaluation(ref_event_list, est_event_list)
@@ -144,11 +148,9 @@ def get_ref_event_list(meta, audio_names):
     for (n, audio_name) in enumerate(audio_names):
         
         curr_meta = search_meta_by_mixture_name(meta, audio_name)
-        
         events = curr_meta['events']
         
-        for event in events:
-            
+        for event in events:            
             ref_event = {'filename': audio_name, 
                          'onset': event['onset'], 
                          'offset': event['offset'], 
@@ -195,7 +197,6 @@ def average_stat_list(stat_list):
     avg_stat = {}
     
     for key in keys:
-        
         tmp = []
         for stat in stat_list:
             tmp.append(stat[key])

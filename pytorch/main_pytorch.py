@@ -10,6 +10,7 @@ import time
 import yaml
 import logging
 import matplotlib.pyplot as plt
+import pickle
 
 import torch
 import torch.nn as nn
@@ -21,26 +22,11 @@ from utilities import (get_filename, create_logging, create_folder,
                        prec_recall_fvalue, search_meta_by_mixture_name, 
                        get_sed_from_meta, ideal_binary_mask)
 from features import LogMelExtractor
-from models_pytorch import move_data_to_gpu, VggishGMP, VggishGAP, VggishGWRP
+from models_pytorch import move_data_to_gpu, get_model
 import config
 
 
 batch_size = 24
-
-
-def get_model(model_type):
-    
-    if model_type == 'gmp': 
-        return VggishGMP
-        
-    elif model_type == 'gap': 
-        return VggishGAP
-        
-    elif model_type == 'gwrp':
-        return VggishGWRP
-        
-    else:
-        raise Exception('Incorrect model type!')
 
 
 def evaluate(model, generator, data_type, max_iteration, cuda):
@@ -260,7 +246,7 @@ def train(args):
             logging.info('Model saved to {}'.format(save_out_path))
             
         # Reduce learning rate
-        if iteration % 200 == 0 > 0:
+        if iteration % 200 == 0 and iteration > 0:
             for param_group in optimizer.param_groups:
                 param_group['lr'] *= 0.9
 
@@ -305,8 +291,7 @@ def inference(args):
     seq_len = config.seq_len
     ix_to_lb = config.ix_to_lb
     
-    thres = 0.1
-    
+    threshold = 0.1
 
     # Paths
     hdf5_path = os.path.join(workspace, 'features', 'logmel', 
@@ -317,7 +302,7 @@ def inference(args):
         ''.format(scene_type, snr), 'holdout_fold{}'.format(holdout_fold), 
         'md_{}_iters.tar'.format(iteration))
     
-    yaml_path = os.path.join(workspace, 'yaml_files', 'mixture.yaml')
+    yaml_path = os.path.join(workspace, 'mixture.yaml')
     
     out_stat_path = os.path.join(workspace, 'stats', filename, 
         'model_type={}'.format(model_type), 'scene_type={},snr={}'
@@ -375,20 +360,23 @@ def inference(args):
     ss_outputs = []
     ss_targets = []
     
+    validate_num = len(generator.validate_audio_indexes)
+    
     # Evaluate on mini-batch
     for iteration, data in enumerate(generate_func):
         
-        print('iteration: {}'.format(iteration))
+        print('{} / {} inferenced & detected!'.format(
+            iteration * batch_size, validate_num))
         
         (batch_x, batch_y, batch_audio_names) = data
             
         batch_x = move_data_to_gpu(batch_x, cuda)
 
         # Predict
-        model.eval()
-        
-        (batch_output, batch_bottleneck) = model(batch_x, 
-                                                 return_bottleneck=True)
+        with torch.no_grad():
+            model.eval()        
+            (batch_output, batch_bottleneck) = model(batch_x, 
+                                                    return_bottleneck=True)
     
         batch_output = batch_output.data.cpu().numpy()
         '''(batch_size, classes_num)'''
@@ -411,7 +399,9 @@ def inference(args):
             gt_sed = get_sed_from_meta(gt_events)
             '''(seq_len, classes_num)'''
               
-            pred_classes = np.where(batch_output[n] > thres)[0]
+            # Do audio tagging first, then only apply SED to the positive 
+            # classes to reduce the false positives. 
+            pred_classes = np.where(batch_output[n] > threshold)[0]
             pred_sed = np.zeros((seq_len, classes_num))
             pred_sed[:, pred_classes] = batch_pred_sed[n][:, pred_classes]
             '''(seq_len, classes_num)'''
@@ -466,7 +456,7 @@ def inference(args):
     # Evaluate audio tagging
     at_time = time.time()
 
-    (at_precision, at_recall, at_f1_score) = prec_recall_fvalue(at_targets, at_outputs, thres, None)    
+    (at_precision, at_recall, at_f1_score) = prec_recall_fvalue(at_targets, at_outputs, threshold, None)    
     at_auc = metrics.roc_auc_score(at_targets, at_outputs, average=None)    
     at_ap = metrics.average_precision_score(at_targets, at_outputs, average=None)
     
@@ -478,7 +468,7 @@ def inference(args):
     (sed_precision, sed_recall, sed_f1_score) = prec_recall_fvalue(
         sed_targets.reshape((sed_targets.shape[0] * sed_targets.shape[1], sed_targets.shape[2])), 
         sed_outputs.reshape((sed_outputs.shape[0] * sed_outputs.shape[1], sed_outputs.shape[2])), 
-        thres=thres, average=None)
+        thres=threshold, average=None)
         
     sed_auc = metrics.roc_auc_score(
         sed_targets.reshape((sed_targets.shape[0] * sed_targets.shape[1], sed_targets.shape[2])), 
@@ -497,7 +487,7 @@ def inference(args):
     (ss_precision, ss_recall, ss_f1_score) = prec_recall_fvalue(
         ss_targets.reshape((ss_targets.shape[0] * ss_targets.shape[1] * ss_targets.shape[2], ss_targets.shape[3])), 
         ss_outputs.reshape((ss_outputs.shape[0] * ss_outputs.shape[1] * ss_outputs.shape[2], ss_outputs.shape[3])), 
-        thres=thres, average=None)
+        thres=threshold, average=None)
         
     logging.info('SS fvalue time: {:.3f} s'.format(time.time() - ss_time))
     

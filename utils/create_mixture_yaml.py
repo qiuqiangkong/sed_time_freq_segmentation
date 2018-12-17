@@ -110,7 +110,6 @@ def create_mixture_yaml(args):
     
     workspace = args.workspace
     
-    
     random_state = np.random.RandomState(1234)
     folds = [1, 2, 3, 4]
     mixed_audios_per_fold = 2000
@@ -124,7 +123,7 @@ def create_mixture_yaml(args):
     dcase2018_task2_meta = os.path.join(workspace, 
                                         'dcase2018_task2_validate_meta.csv')
     
-    out_yaml_path = os.path.join(workspace, 'yaml_files', 'mixture.yaml')
+    out_yaml_path = os.path.join(workspace, 'mixture.yaml')
     create_folder(os.path.dirname(out_yaml_path))
     
     # DCASE 2018 Task 1 acoutic scenes meta
@@ -224,3 +223,6 @@ if __name__ == '__main__':
         
     elif args.mode == 'create_mixture_yaml':
         create_mixture_yaml(args)
+
+    else:
+        raise Exception('Incorrect argument!')

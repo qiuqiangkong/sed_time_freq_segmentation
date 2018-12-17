@@ -32,7 +32,7 @@ def create_mixed_audios(args):
     random_state = np.random.RandomState(1234)
     
     # Paths
-    mixture_yaml_path = os.path.join(workspace, 'yaml_files', 'mixture.yaml')
+    mixture_yaml_path = os.path.join(workspace, 'mixture.yaml')
     
     out_audios_dir = os.path.join(workspace, 'mixed_audios', 
         'scene_type={},snr={}'.format(scene_type, snr))

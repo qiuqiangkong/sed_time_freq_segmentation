@@ -169,7 +169,7 @@ def calculate_logmel_features(args):
     audio_dir = os.path.join(workspace, 'mixed_audios', 
                              'scene_type={},snr={}'.format(scene_type, snr))
     
-    yaml_path = os.path.join(workspace, 'yaml_files', 'mixture.yaml')
+    yaml_path = os.path.join(workspace, 'mixture.yaml')
     
     hdf5_path = os.path.join(workspace, 'features', 'logmel', 
         'scene_type={},snr={}'.format(scene_type, snr), 'development.h5')

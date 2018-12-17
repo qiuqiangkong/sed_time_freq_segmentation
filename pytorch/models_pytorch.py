@@ -294,3 +294,18 @@ class VggishGWRP(nn.Module):
         output = x / self.sum_gwrp_w
         
         return output
+        
+        
+def get_model(model_type):
+    
+    if model_type == 'gmp': 
+        return VggishGMP
+        
+    elif model_type == 'gap': 
+        return VggishGAP
+        
+    elif model_type == 'gwrp':
+        return VggishGWRP
+        
+    else:
+        raise Exception('Incorrect model type!')
